@@ -14,5 +14,6 @@ public class ItemInfoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_item_info);
         final SharedPreferences sharedPref= PreferenceManager.getDefaultSharedPreferences(this);
         inputPosition=sharedPref.getInt("position",0);
+        inputPosition=inputPosition+0;
     }
 }
