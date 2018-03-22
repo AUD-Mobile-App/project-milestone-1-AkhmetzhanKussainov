@@ -15,21 +15,35 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Comment;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.chrono.MinguoChronology;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     ListView lv;
-    private ProgressDialog pDialog;
-    eventClass[] events;
-    String[] itemname;
+   // eventClass[] events;
+    List<eventClass> eventsFirebase;
     SharedPreferences sharedPref;
+    private DatabaseReference mDatabase;
+    private FirebaseDatabase mFirebaseDatabase;
+    MyListAdapter adapter;
+    List<String> keys;
 
 
     //Tag for parsing
@@ -38,12 +52,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        keys=new ArrayList<String>();
+        eventsFirebase=new ArrayList<>();
         lv=findViewById(R.id.listView);
+        Date date=new Date(1990,2,3);
+       // eventsFirebase.add(new eventClass(date,"new name"));
+     //   eventsFirebase.add(new eventClass(new Date(1920,1,5),"randomName"));
+        adapter=new MyListAdapter(MainActivity.this,eventsFirebase);
+        lv.setAdapter(adapter);
+        mFirebaseDatabase=FirebaseDatabase.getInstance();
+        mDatabase= mFirebaseDatabase.getReference("events");
 
-      //  Date date=new Date(1990,2,3);
-      //  events[0]=new eventClass(date,"name1");
-      //  events[1]=new eventClass(date,"name2");
+        sharedPref=PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
 
 
         FloatingActionButton fab;
@@ -56,157 +76,88 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mDatabase.addChildEventListener(childEventListener);
 
 
-
-
-        new GetEvents().execute();
+//        new GetEvents().execute();
 
 
      //   itemname[0]=events[0].getName();
        // itemname[1]=events[1].getName();
 
+    }
 
-
-
+    @Override
+    protected void onStart() {
+        final SharedPreferences.Editor editor = sharedPref.edit();
+        super.onStart();
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                editor.putInt("position", i);
+                editor.commit();
+                startActivity(new Intent(MainActivity.this, ItemInfoActivity.class));
+            }
+        });
     }
 
 
 
 
-    private class GetEvents extends AsyncTask<Void, Void, Void> {
-        //make actions before starting of execution
+    ChildEventListener childEventListener = new ChildEventListener() {
         @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            // Showing progress dialog
-            pDialog = new ProgressDialog(MainActivity.this);
-            pDialog.setMessage("Please wait...");
-            pDialog.setCancelable(false);
-            pDialog.show();
+        public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+            Log.d(TAG, "onChildAdded:" + dataSnapshot.getKey());
 
-        }
-
-        //connect to the server,load and parse json
-        @Override
-        protected Void doInBackground(Void... arg0) {
-
-            // Making a request to url and getting response
-            String jsonStr = loadJSONFromAsset(MainActivity.this);
-
-            Log.e(TAG, "Response from url: " + jsonStr);
-
-            //check if recived json
-            if (jsonStr != null) {
-                try {
-                    //initializing json objects
-                    JSONObject jsonObj = new JSONObject(jsonStr);
-
-                    //take array "songs" to parse
-                    JSONArray jsonEvents = jsonObj.getJSONArray("events");
-
-                    events=new eventClass[jsonEvents.length()];
-                    //parsing of json values to store into songInfo
-                    for (int i = 0; i < jsonEvents.length(); i++) {
-
-                        JSONObject c = jsonEvents.getJSONObject(i);
-                        //parsing by tag
-                        String name = c.getString("name");
-                        String description = c.getString("description");
-                        Long dueDate = c.getLong("dueDate");
-                        Date d = new Date(dueDate * 1000);
-                        eventClass event=new eventClass(d,name);
-                        events[i]=event;
-                    }
-
-                }//catch error during parsing
-                catch (final JSONException e) {
-                    Log.e(TAG, "Json parsing error: " + e.getMessage());
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(),
-                                    "Json parsing error: " + e.getMessage(),
-                                    Toast.LENGTH_LONG)
-                                    .show();
-                        }
-                    });
-
-                }
-
-            }//if could not receive json
-            else {
-                Log.e(TAG, "Couldn't get json from server.");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(),
-                                "Couldn't get json from server. Check LogCat for possible errors!",
-                                Toast.LENGTH_LONG)
-                                .show();
-                    }
-                });
-
-            }
-
-            return null;
-        }
-        //commands after parsing json file
-        @Override
-        protected void onPostExecute(Void result) {
-            super.onPostExecute(result);
-            itemname=new String[events.length];
-            if (pDialog.isShowing())
-                pDialog.dismiss();
-            MyListAdapter adapter=new MyListAdapter(MainActivity.this,itemname,events);
+            // A new comment has been added, add it to the displayed list
+            eventClass event= dataSnapshot.getValue(eventClass.class);
+            eventsFirebase.add(event);
+            adapter=new MyListAdapter(MainActivity.this,eventsFirebase);
             lv.setAdapter(adapter);
-            sharedPref= PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-            final SharedPreferences.Editor editor=sharedPref.edit();
-            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                    editor.putInt("position",i);
-                    editor.commit();
-                    startActivity(new Intent(MainActivity.this,ItemInfoActivity.class));
-                }
-            });
 
-
-
-
-
-
-
+            // ...
         }
 
-        public String loadJSONFromAsset(Context context) {
-            String json = null;
-            try {
-                InputStream is = getResources().openRawResource(R.raw.events);
+        @Override
+        public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
+            Log.d(TAG, "onChildChanged:" + dataSnapshot.getKey());
 
-                int size = is.available();
+            // A comment has changed, use the key to determine if we are displaying this
+            // comment and if so displayed the changed comment.
+            Comment newComment = dataSnapshot.getValue(Comment.class);
+            String commentKey = dataSnapshot.getKey();
 
-                byte[] buffer = new byte[size];
-
-                is.read(buffer);
-
-                is.close();
-
-                json = new String(buffer, "UTF-8");
-
-
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                return null;
-            }
-            return json;
+            // ...
         }
 
+        @Override
+        public void onChildRemoved(DataSnapshot dataSnapshot) {
+            Log.d(TAG, "onChildRemoved:" + dataSnapshot.getKey());
 
+            // A comment has changed, use the key to determine if we are displaying this
+            // comment and if so remove it.
+            String commentKey = dataSnapshot.getKey();
 
+            // ...
+        }
 
+        @Override
+        public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
+            Log.d(TAG, "onChildMoved:" + dataSnapshot.getKey());
 
+            // A comment has changed position, use the key to determine if we are
+            // displaying this comment and if so move it.
+            Comment movedComment = dataSnapshot.getValue(Comment.class);
+            String commentKey = dataSnapshot.getKey();
 
+            // ...
+        }
 
-    }
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+            Log.w(TAG, "postComments:onCancelled", databaseError.toException());
+            Toast.makeText(MainActivity.this, "Failed to load comments.",
+                    Toast.LENGTH_SHORT).show();
+        }
+    };
 }

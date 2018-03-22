@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 
 
 //Custom List adapter for making the UI
@@ -29,8 +30,8 @@ public class MyListAdapter extends ArrayAdapter<String> {
   //  private final String[] songAuthor;
 
     //constructor
-    public MyListAdapter(Activity context,String[] itemName, eventClass[] eventIn) {
-        super(context, R.layout.mylist,itemName);
+    public MyListAdapter(Activity context, eventClass[] eventIn) {
+        super(context, R.layout.mylist,new String[eventIn.length]);
         // TODO Auto-generated constructor stub
 
         this.events=eventIn;
@@ -39,6 +40,37 @@ public class MyListAdapter extends ArrayAdapter<String> {
       /*  this.songName=itemname;
         this.songAuthor =songAuthor;*/
     }
+
+    public MyListAdapter(Activity context,String[] itemName, List<eventClass> eventIn) {
+        super(context, R.layout.mylist,itemName);
+        // TODO Auto-generated constructor stub
+        this.events=new eventClass[eventIn.size()];
+        for(int i=0;i<events.length;i++)
+        {
+            events[i]=eventIn.get(i);
+        }
+        this.context=context;
+        Arrays.sort(events,new sortByDates());
+      /*  this.songName=itemname;
+        this.songAuthor =songAuthor;*/
+    }
+
+    public MyListAdapter(Activity context, List<eventClass> eventIn) {
+        super(context, R.layout.mylist,new String[eventIn.size()]);
+        // TODO Auto-generated constructor stub
+        this.events=new eventClass[eventIn.size()];
+        for(int i=0;i<events.length;i++)
+        {
+            events[i]=eventIn.get(i);
+        }
+        this.context=context;
+        Arrays.sort(events,new sortByDates());
+      /*  this.songName=itemname;
+        this.songAuthor =songAuthor;*/
+    }
+
+
+
 
     //getView to set the values for list_view.xml
     public View getView(int position,View view,ViewGroup parent) {

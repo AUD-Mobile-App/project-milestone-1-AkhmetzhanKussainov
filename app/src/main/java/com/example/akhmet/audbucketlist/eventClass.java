@@ -25,6 +25,21 @@ public class eventClass {
         this.description="description";
     }
 
+    public eventClass(Date dueDateIn, String nameIn,String descriptionIn)
+    {
+        this.dueDate=dueDateIn;
+        this.name=nameIn;
+        this.isCompleted=false;
+        this.longtitude=0.0;
+        this.latitude=0.0;
+        this.description=descriptionIn;
+    }
+
+    public eventClass()
+    {}
+
+
+
     public Boolean getCompleted() {
         return isCompleted;
     }

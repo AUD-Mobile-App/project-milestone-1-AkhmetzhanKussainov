@@ -39,6 +39,7 @@
             android:fontFamily="sans-serif"
             android:text="@string/app_name"
             android:textAlignment="viewStart"
+            android:layout_gravity="start"
             android:textColor="@color/statusBarColor"
             android:textSize="20sp"
             android:textStyle="bold"/>
@@ -53,7 +54,7 @@
             android:src="@drawable/back"/>
 
         <EditText
-            android:id="@+id/txtEvent"
+            android:id="@+id/txtNewEvent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
@@ -61,23 +62,32 @@
             android:layout_below="@+id/toolbar"
             android:layout_marginLeft="17dp"
             android:layout_marginStart="17dp"
-            android:layout_marginTop="45dp"
+            android:layout_marginTop="46dp"
             android:ems="10"
             android:hint="Event Name"
             android:inputType="textPersonName"
             android:singleLine="false"/>
 
         <EditText
-            android:id="@+id/editText2"
+            android:id="@+id/txtNewDescription"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignLeft="@+id/txtEvent"
-            android:layout_alignStart="@+id/txtEvent"
-            android:layout_below="@+id/txtEvent"
+            android:layout_alignLeft="@+id/txtNewEvent"
+            android:layout_alignStart="@+id/txtNewEvent"
+            android:layout_below="@+id/txtNewEvent"
             android:layout_marginTop="36dp"
             android:ems="10"
             android:hint="Description"
             android:inputType="textPersonName"/>
+
+        <Button
+            android:id="@+id/btnAddItem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="81dp"
+            android:text="Add Item"/>
 
     </RelativeLayout>
 </android.support.constraint.ConstraintLayout>
